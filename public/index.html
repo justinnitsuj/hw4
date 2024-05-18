@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>物價價格查詢</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    form {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: inline-block;
+      width: 90px;
+      margin-right: 10px;
+      text-align: right;
+    }
+
+    input, select {
+      margin-bottom: 10px;
+    }
+
+    #results {
+      white-space: pre-wrap;
+    }
+
+    /* 表格樣式 */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1px solid #ddd;
+    }
+
+    th, td {
+      padding: 8px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+
+    th {
+      background-color: #f2f2f2;
+    }
+
+    tr:hover {
+      background-color: #f5f5f5;
+    }
+  </style>
+</head>
+<body>
+<h1>雞蛋牛奶物價價格查詢</h1>
+<form id="searchForm">
+  <p>註：時間區間為87年1月至113年1月</p>
+  <label for="year">年份:</label>
+
+  <input type="number" id="year" name="year" min="87" max="113">
+  <label for="month">月份:</label>
+  <input type="number" id="month" name="month" min="1" max="12">
+  <label for="products">商品:</label>
+  <select id="products" name="products">
+    <option value="both">雞蛋和牛奶</option>
+    <option value="egg">雞蛋</option>
+    <option value="milk">牛奶</option>
+  </select>
+  <label for="minPrice">最低價格 (元/公斤):</label>
+  <input type="number" id="minPrice" name="minPrice" step="0.01">
+  <label for="maxPrice">最高價格 (元/公斤):</label>
+  <input type="number" id="maxPrice" name="maxPrice" step="0.01">
+  <button type="submit">查詢</button>
+</form>
+<table id="results">
+  <thead>
+  <tr>
+    <th>年份</th>
+    <th>月份</th>
+    <th>價格</th>
+  </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<script>
+  const searchForm = document.getElementById('searchForm');
+  const resultsTable = document.getElementById('results').getElementsByTagName('tbody')[0];
+
+  searchForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const year = document.getElementById('year').value;
+    const month = document.getElementById('month').value;
+    const products = document.getElementById('products').value;
+    const minPrice = document.getElementById('minPrice').value;
+    const maxPrice = document.getElementById('maxPrice').value;
+
+    const queryParams = new URLSearchParams({
+      year,
+      month,
+      products,
+      minPrice,
+      maxPrice
+    }).toString();
+
+    try {
+      const response = await fetch(`/api/search?${queryParams}`);
+      const data = await response.json();
+      displayResults(data);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      displayResults('錯誤: 無法獲取數據');
+    }
+  });
+
+  function displayResults(data) {
+    // 清空結果表格
+    resultsTable.innerHTML = '';
+
+    if (Array.isArray(data)) {
+      data.forEach(record => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+        <td>${record.year}</td>
+        <td>${record.month}</td>
+        <td>${record.price}</td>
+      `;
+        resultsTable.appendChild(row);
+      });
+    } else {
+      const row = document.createElement('tr');
+      row.innerHTML = `<td colspan="3">${data}</td>`;
+      resultsTable.appendChild(row);
+    }
+  }
+</script>
+</body>
+</html>
